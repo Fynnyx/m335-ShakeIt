@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Shake It!</string>
+    <string name="x_axis">Movement Speed</string>
+</resources>
