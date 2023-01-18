@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final String NOTIF_CHANNEL_ID = "shakeit_channel";
     private static final String NOTIF_CHANNEL_NAME = "ShakeIt Channel";
 
-    private final int SHAKE_INTESITY = 40;
+    private final int SHAKE_INTESITY = 50;
     private final int MIN_SHAKE_INTESITY = 10;
 
 
@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Set chart and AxisLine styling
         chart.setBackgroundColor(getResources().getColor(R.color.white));
+        chart.getAxisLeft().mAxisMinimum = -10;
 
         xAxisLineData.setLabel(getString(R.string.x_axis));
         xAxisLineData.setCircleColor(Color.RED);
@@ -142,7 +143,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         addValuesToDataSets(sensorEvent.values);
-        detectShake(sensorEvent.values);
+//        detectShake(sensorEvent.values);
+        newShakeDetection(sensorEvent.values);
         setTextViews();
     }
 
@@ -240,5 +242,54 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (isShaking) {
             scoreTextView.setText(String.valueOf(score));
         }
+    }
+
+    float newHighX = -1;
+    float newLastX = 0;
+    float newDeltaX = 0;
+    float newCurrentValue = 0;
+    boolean moveUp = false;
+
+
+    // New Shake Detection
+    void newShakeDetection(float[] values) {
+        newCurrentValue = values[0];
+        newDeltaX = Math.abs(lastX - newCurrentValue);
+
+        if (newCurrentValue < 0.1 && newCurrentValue > -0.1) {
+        }
+        else if (!moveUp && newCurrentValue > newLastX) {
+//            if (!moveUp) {
+                deltaX = Math.abs(newHighX - newLastX);
+//                Log.i("MainActivity", "Delta: " + deltaX);
+                newHighX = newLastX;
+//            }
+            moveUp = true;
+//            Log.e("MainActivity", "Current: " + newCurrentValue + " - Last: " + newLastX);
+
+        } else if (moveUp && newCurrentValue < newLastX) {
+//            if (moveUp) {
+                deltaX = Math.abs(newHighX - newLastX);
+//                Log.i("MainActivity", "Delta: " + deltaX);
+                newHighX = newLastX;
+//            }
+            moveUp = false;
+//            Log.d("MainActivity", "Current: " + newCurrentValue + " - Last: " + newLastX);
+        }
+
+        if (deltaX > SHAKE_INTESITY ) {
+            score += deltaX;
+            isShaking = true;
+        } else {
+            if (isShaking) {
+                setHighscore();
+            }
+            score = 0;
+            isShaking = false;
+        }
+
+        // Log Current and Last Value
+//        Log.d("MainActivity", "Current: " + newCurrentValue + " - Last: " + newLastX);
+        newLastX = newCurrentValue;
     }
 }
