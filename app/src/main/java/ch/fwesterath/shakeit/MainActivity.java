@@ -12,8 +12,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Config;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -113,7 +111,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Get SensorManager and Accelerometer
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accSensor, SAMPLING_RATE);
 
         // Get SharedPreferences
         sharedPreferences = getSharedPreferences("SHARED_PREFS", MODE_PRIVATE);
@@ -143,7 +140,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         addValuesToDataSets(sensorEvent.values);
-//        detectShake(sensorEvent.values);
         newShakeDetection(sensorEvent.values);
         setTextViews();
     }
@@ -153,14 +149,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    //
     void detectShake(float[] values) {
         float currentValue = values[0];
         deltaX = Math.abs(lastX - currentValue);
-
-        // Set Shaking Status
-
-//        Log.d("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
-
         if ((deltaX > SHAKE_INTESITY) || (isShaking && deltaX > 5)) {
             isShaking = true;
             score += deltaX;
@@ -171,12 +163,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             isShaking = false;
             score = 0;
         }
-
-//        if (isShaking) {
-//            Log.d("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
-//        } else if (deltaX > 1) {
-//            Log.e("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
-//        }
         lastX = currentValue;
 
     }
@@ -203,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // Notification
     private void sendNotification(String title, String message) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIF_CHANNEL_ID);
-            builder.setSmallIcon(R.drawable.ic_launcher_background);
+            builder.setSmallIcon(R.mipmap.ic_launcher);
             builder.setContentTitle("ShakeIt - " + title);
             builder.setContentText(message);
             builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
