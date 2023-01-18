@@ -1,5 +1,8 @@
 package ch.fwesterath.shakeit;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -7,12 +10,15 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Config;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -30,6 +36,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private final static int SAMPLING_RATE = 100000 ; // in microseconds
     private final static int DISPLAY_PERIOD = 30; // in seconds
     private final static int CHART_ENTRIES_LIMIT = SAMPLING_RATE / 100000 * DISPLAY_PERIOD; // equals 300 displayed entries
+
+    private static final String NOTIF_CHANNEL_ID = "shakeit_channel";
+    private static final String NOTIF_CHANNEL_NAME = "ShakeIt Channel";
 
     private final int SHAKE_INTESITY = 40;
     private final int MIN_SHAKE_INTESITY = 10;
@@ -63,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView shakeTextView;
     private TextView highscoreTextView;
     private TextView scoreTextView;
+
+    // Notification
+    private NotificationManager notificationManager;
 
 
 
@@ -107,6 +119,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         highscore = sharedPreferences.getInt("highscore", 0);
         highscoreTextView.setText(String.valueOf(highscore));
         scoreTextView.setText(String.valueOf(score));
+
+        this.notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(NOTIF_CHANNEL_ID, NOTIF_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     @Override
@@ -116,10 +134,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, accSensor, SAMPLING_RATE);
+    }
+
+    @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         addValuesToDataSets(sensorEvent.values);
         detectShake(sensorEvent.values);
-        setHighscore();
         setTextViews();
     }
 
@@ -140,15 +163,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             isShaking = true;
             score += deltaX;
         } else if (isShaking && deltaX < SHAKE_INTESITY) {
+            if (isShaking) {
+                setHighscore();
+                sendNotification("New Highscore", "Your new highscore is: " + highscore);
+            }
             isShaking = false;
             score = 0;
         }
 
-        if (isShaking) {
-            Log.d("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
-        } else if (deltaX > 1) {
-            Log.e("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
-        }
+//        if (isShaking) {
+//            Log.d("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
+//        } else if (deltaX > 1) {
+//            Log.e("MainActivity", "Delta: " + deltaX + " - IsShaking: " + isShaking);
+//        }
         lastX = currentValue;
 
     }
@@ -169,6 +196,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("highscore", highscore);
         editor.apply();
+    }
+
+    // Notification
+    private void sendNotification(String title, String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIF_CHANNEL_ID);
+            builder.setSmallIcon(R.drawable.ic_launcher_background);
+            builder.setContentTitle("ShakeIt - " + title);
+            builder.setContentText(message);
+            builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            builder.setAutoCancel(true);
+            builder.setDefaults(Notification.DEFAULT_ALL);
+        notificationManager.notify(1, builder.build());
     }
 
     // Add values to chart
@@ -201,6 +240,5 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (isShaking) {
             scoreTextView.setText(String.valueOf(score));
         }
-        highscoreTextView.setText(String.valueOf(highscore));
     }
 }
