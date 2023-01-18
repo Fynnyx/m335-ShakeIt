@@ -165,7 +165,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         } else if (isShaking && deltaX < SHAKE_INTESITY) {
             if (isShaking) {
                 setHighscore();
-                sendNotification("New Highscore", "Your new highscore is: " + highscore);
             }
             isShaking = false;
             score = 0;
@@ -187,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt("highscore", highscore);
             editor.apply();
+            sendNotification("New Highscore", "Your new highscore is: " + highscore);
         }
     }
 
