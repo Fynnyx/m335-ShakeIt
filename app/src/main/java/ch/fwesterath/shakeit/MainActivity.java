@@ -93,12 +93,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             resetHighscore();
         });
 
-
-
-
         // Set chart and AxisLine styling
         chart.setBackgroundColor(getResources().getColor(R.color.white));
-        chart.getAxisLeft().mAxisMinimum = -10;
 
         xAxisLineData.setLabel(getString(R.string.x_axis));
         xAxisLineData.setCircleColor(Color.RED);
